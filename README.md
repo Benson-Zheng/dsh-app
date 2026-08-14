@@ -7,7 +7,7 @@ The product UI is the DeepSeek Harness browser UI. This host starts `dsh web` on
 ## Clone and run
 
 ```bash
-git clone https://github.com/OWNER/dsh-app.git
+git clone https://github.com/Benson-Zheng/dsh-app.git
 cd dsh-app
 npm install
 npm start
