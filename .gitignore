@@ -1,0 +1,12 @@
+node_modules/
+dist/
+tmp-verify/
+/build/detect-dsh.js
+/build/install-dsh.js
+/build/lifecycle.js
+*.log
+.DS_Store
+Thumbs.db
+*.exe
+*.blockmap
+win-unpacked/

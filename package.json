@@ -1,0 +1,73 @@
+{
+  "name": "dsh-app",
+  "productName": "dsh app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Windows desktop app that wraps dsh web in a native window with tray chrome",
+  "main": "src/main.js",
+  "author": "dsh app",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "test": "node --test test/lifecycle.test.js test/chrome.test.js test/payload.test.js test/fresh-install-doc.test.js test/detect-dsh.test.js test/install-dsh.test.js test/marketplace.test.js test/publish-tree.test.js",
+    "pack": "node scripts/prepare-installer.js && electron-builder --win nsis portable dir --publish never",
+    "dist": "node scripts/prepare-installer.js && electron-builder --win nsis portable --publish never",
+    "inspect-payload": "node scripts/inspect-payload.js"
+  },
+  "devDependencies": {
+    "electron": "^35.7.5",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "ai.deepseek.dsh-app",
+    "productName": "dsh app",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json",
+      "!**/{dsh,dsh.exe,dsh.cmd}",
+      "!**/node_modules/@deepseek-ai/dsh/**"
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "dsh-app.exe"
+    },
+    "nsis": {
+      "include": "installer.nsh",
+      "artifactName": "dsh-app-setup.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "dsh app",
+      "uninstallDisplayName": "dsh app"
+    }
+  }
+}
