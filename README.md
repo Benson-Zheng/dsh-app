@@ -15,6 +15,16 @@ npm start
 
 Requires a separately installed CLI: `npm install -g @deepseek-ai/dsh`. License: MIT (see [LICENSE](LICENSE)).
 
+## Screenshots
+
+会话（DeepSeek Harness in the native window）:
+
+![会话](docs/screenshots/session.png)
+
+插件广场:
+
+![插件广场](docs/screenshots/plaza.png)
+
 ## 全新电脑怎么装
 
 完整步骤见 **[docs/全新电脑安装.md](docs/全新电脑安装.md)**。顺序是：

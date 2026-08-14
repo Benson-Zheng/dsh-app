@@ -26,3 +26,17 @@ test('publish tree ignores generated dirs and ships MIT + wrapper README', () =>
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   assert.equal(pkg.license, 'MIT');
 });
+
+test('README shows the two published app screenshots', () => {
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+  for (const rel of ['docs/screenshots/session.png', 'docs/screenshots/plaza.png']) {
+    const file = path.join(root, rel);
+    const bytes = fs.readFileSync(file);
+    assert.ok(bytes.length > 10 * 1024, `${rel} too small`);
+    assert.ok(bytes.subarray(0, 4).equals(png), `${rel} is not a PNG`);
+    assert.match(readme, new RegExp(rel.replace('.', '\\.')));
+  }
+  assert.match(readme, /!\[会话\]\(docs\/screenshots\/session\.png\)/);
+  assert.match(readme, /!\[插件广场\]\(docs\/screenshots\/plaza\.png\)/);
+});
