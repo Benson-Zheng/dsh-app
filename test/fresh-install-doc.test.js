@@ -35,4 +35,6 @@ test('documented artifact names match package.json exactly', () => {
   assert.match(readme, /dsh-app\.exe/);
   assert.match(readme, /npm install -g @deepseek-ai\/dsh/);
   assert.match(readme, /docs\/全新电脑安装\.md/);
+  assert.match(readme, /github.com\/Benson-Zheng\/dsh-app\/releases/);
+  assert.match(guide, /github.com\/Benson-Zheng\/dsh-app\/releases/);
 });

@@ -21,7 +21,7 @@ Requires a separately installed CLI: `npm install -g @deepseek-ai/dsh`. License:
 
 1. 安装 [Node.js](https://nodejs.org/) LTS（18+）
 2. `npm install -g @deepseek-ai/dsh`
-3. 运行 **`dsh-app-setup.exe`**（安装）或 **`dsh-app.exe`**（便携）
+3. 从 [Releases](https://github.com/Benson-Zheng/dsh-app/releases) 下载 **`dsh-app-setup.exe`**（安装）或自行 `npm run pack` 得到便携版 **`dsh-app.exe`**
 4. 打开 **dsh app**
 
 外壳和 CLI 分开：`npm update -g @deepseek-ai/dsh` 即可升级 `dsh`，不用重装桌面应用。
@@ -52,9 +52,8 @@ npm start
 
 Unpackaged desktop entry: `npm start` (Electron).
 
-Windows installer (shell only): `dist/dsh-app-setup.exe`  
-Packaged portable exe: `dist/dsh-app.exe`  
-Unpacked desktop exe: `dist/win-unpacked/dsh app.exe`
+Prebuilt Windows installer (shell only): [Releases](https://github.com/Benson-Zheng/dsh-app/releases) → **`dsh-app-setup.exe`**.  
+Local pack: `dist/dsh-app-setup.exe`, portable `dist/dsh-app.exe`, unpacked `dist/win-unpacked/dsh app.exe`.
 
 ```bash
 npm test
