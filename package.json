@@ -10,7 +10,7 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "test": "node --test test/lifecycle.test.js test/chrome.test.js test/payload.test.js test/fresh-install-doc.test.js test/detect-dsh.test.js test/install-dsh.test.js test/marketplace.test.js test/publish-tree.test.js test/icon.test.js",
+    "test": "node --test test/lifecycle.test.js test/chrome.test.js test/payload.test.js test/fresh-install-doc.test.js test/detect-dsh.test.js test/install-dsh.test.js test/marketplace.test.js test/publish-tree.test.js test/icon.test.js test/boot-handoff.test.js",
     "pack": "node scripts/prepare-installer.js && electron-builder --win nsis portable dir --publish never",
     "dist": "node scripts/prepare-installer.js && electron-builder --win nsis portable --publish never",
     "inspect-payload": "node scripts/inspect-payload.js",

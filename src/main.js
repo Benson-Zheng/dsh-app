@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { app, BrowserView, BrowserWindow, ipcMain, nativeImage, nativeTheme, shell } = require('electron');
-const { DshAppError, installUserDsh, startDshWeb, stopChild } = require('./lifecycle');
+const { DshAppError, bootHandoff, installUserDsh, localPageUrl, startDshWeb, stopChild } = require('./lifecycle');
 const {
   inspectAfterInstall,
   loadSnapshot,
@@ -297,29 +297,32 @@ function ensurePlazaLoaded() {
 
 function loadLocal(file, query) {
   const contents = contentContents();
-  if (!contents) return;
-  const url = new URL(`file://${path.join(__dirname, file)}`);
+  if (!contents) return Promise.resolve();
+  const filePath = path.join(__dirname, file);
+  const q = {};
   if (query) {
-    for (const [key, value] of Object.entries(query)) {
-      url.searchParams.set(key, String(value));
-    }
+    for (const [key, value] of Object.entries(query)) q[key] = String(value);
   }
-  return contents.loadURL(url.toString());
+  if (typeof contents.loadFile === 'function') {
+    return contents.loadFile(filePath, Object.keys(q).length ? { query: q } : undefined);
+  }
+  return contents.loadURL(localPageUrl(filePath, q));
 }
 
 function showMissingDsh(err) {
-  const message = err instanceof DshAppError
-    ? err.message
-    : (err && err.message) || String(err);
-  const code = err && err.code ? err.code : 'DSH_NOT_FOUND';
-  console.error(`[dsh-app] ${code}: ${message}`);
+  const dest = bootHandoff(null, err instanceof Error ? err : new Error(String(err)));
+  console.error(`[dsh-app] ${dest.code}: ${dest.message}`);
   writeReadyFile({
     ok: false,
-    code,
-    message,
+    code: dest.code,
+    message: dest.message,
     pid: process.pid,
+    logs: err && err.logs ? err.logs : undefined,
   });
-  return loadLocal('error.html', { code, message });
+  return showMainSurface('harness').then(() => loadLocal(dest.file, {
+    code: dest.code,
+    message: dest.message,
+  }));
 }
 
 function notifyPlazaBar() {
@@ -443,14 +446,16 @@ async function quitApp() {
 }
 
 async function bootBackend() {
+  await showMainSurface('harness');
   await loadLocal('splash.html');
   try {
     const runtime = await startDshWeb({
       host: '127.0.0.1',
       readyTimeoutMs: Number(process.env.DSH_APP_READY_TIMEOUT_MS || 90_000),
     });
+    const dest = bootHandoff(runtime, null);
     dshChild = runtime.child;
-    origin = runtime.origin;
+    origin = dest.origin;
     console.log(`DSH_APP_ORIGIN=${origin}`);
     writeReadyFile({
       ok: true,
@@ -461,6 +466,7 @@ async function bootBackend() {
       childPid: runtime.child.pid,
       command: runtime.command,
     });
+    await showMainSurface('harness');
     if (harnessView && !harnessView.webContents.isDestroyed()) {
       await harnessView.webContents.loadURL(origin);
       watchHarnessTheme();

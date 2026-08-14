@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const net = require('node:net');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_READY_TIMEOUT_MS = 60_000;
@@ -564,11 +565,53 @@ function stopChild(child, opts = {}) {
  *   signal?: AbortSignal,
  * }} [opts]
  */
+/**
+ * Where the host should navigate after a boot attempt.
+ * Success always leaves splash for the loopback origin; failure always
+ * leaves splash for the in-app error page.
+ * @param {{ origin?: string } | null | undefined} runtime
+ * @param {Error | null | undefined} err
+ */
+function bootHandoff(runtime, err) {
+  if (!err && runtime && runtime.origin) {
+    return { ok: true, kind: 'origin', origin: String(runtime.origin) };
+  }
+  const code = err && err.code ? String(err.code) : 'DSH_NOT_READY';
+  const message = err && err.message ? String(err.message) : String(err || 'dsh web failed');
+  return {
+    ok: false,
+    kind: 'error',
+    file: 'error.html',
+    code,
+    message,
+  };
+}
+
+/**
+ * file: URL for a packaged/unpacked local page. Uses pathToFileURL so
+ * `Program Files\\dsh app` spaces do not break `new URL('file://...')`.
+ * @param {string} filePath
+ * @param {Record<string, string> | undefined} query
+ */
+function localPageUrl(filePath, query) {
+  const url = pathToFileURL(path.resolve(filePath));
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      url.searchParams.set(key, String(value));
+    }
+  }
+  return url.toString();
+}
+
 async function startDshWeb(opts = {}) {
   const host = opts.host ?? DEFAULT_HOST;
+  const env = { ...(opts.env ?? process.env) };
+  if (process.platform === 'win32' && opts.mergeWindowsPath !== false && opts.path === undefined) {
+    env.PATH = windowsSearchPath(env);
+  }
   const command = opts.command
     ?? opts.dshBin
-    ?? resolveDsh({ bin: opts.bin, path: opts.path, env: opts.env });
+    ?? resolveDsh({ bin: opts.bin, path: opts.path ?? env.PATH, env });
   const port = opts.port ?? await allocateFreePort(host);
   const origin = `http://${host}:${port}`;
 
@@ -580,7 +623,7 @@ async function startDshWeb(opts = {}) {
       host,
       port,
       extraArgs: opts.extraArgs,
-      env: opts.env,
+      env,
       cwd: opts.cwd,
     });
   } catch (err) {
@@ -634,6 +677,8 @@ module.exports = {
   DEFAULT_READY_TIMEOUT_MS,
   DSH_INSTALL_HINT,
   DshAppError,
+  bootHandoff,
+  localPageUrl,
   allocateFreePort,
   bundledAppDirs,
   detectInstalledDsh,
