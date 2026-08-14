@@ -126,6 +126,7 @@ test('resolveIconPath points at the official whale mark', () => {
   assert.ok(resolved);
   assert.ok(
     resolved === assets.png || resolved === assets.ico || resolved === assets.whaleSvg,
+    `resolved=${resolved}`,
   );
   const bytes = fs.readFileSync(resolved);
   assert.ok(bytes.length > 0);

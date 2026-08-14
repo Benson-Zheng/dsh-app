@@ -94,7 +94,10 @@ function iconAssetPaths(assetsDir = path.join(__dirname, '..', 'assets')) {
  */
 function resolveIconPath(assetsDir) {
   const paths = iconAssetPaths(assetsDir);
-  for (const file of [paths.png, paths.ico, paths.whaleSvg]) {
+  const order = process.platform === 'win32'
+    ? [paths.ico, paths.png, paths.whaleSvg]
+    : [paths.png, paths.ico, paths.whaleSvg];
+  for (const file of order) {
     try {
       if (fs.statSync(file).isFile()) return file;
     } catch {

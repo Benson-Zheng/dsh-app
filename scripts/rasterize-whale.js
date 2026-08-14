@@ -1,17 +1,53 @@
 'use strict';
 
+/**
+ * Rasterize the official black-whale mark onto a white field so Windows
+ * taskbar / tray / installer icons read as a whale, not a black square.
+ */
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { Resvg } = require('@resvg/resvg-js');
 
 const root = path.join(__dirname, '..', 'assets');
-const svg = fs.readFileSync(path.join(root, 'whale.svg'));
 
-function pngAt(size) {
-  return new Resvg(svg, {
+function extractWhalePath(svgText) {
+  const match = /<path\b[^>]*\sd="([^"]+)"/.exec(String(svgText));
+  if (!match) throw new Error('whale.svg is missing a path');
+  return match[1];
+}
+
+function composeWhaleMarkSvg(sourceSvg, size = 256, pad = 28) {
+  const d = extractWhalePath(sourceSvg);
+  const inner = size - pad * 2;
+  const scale = inner / 50;
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`,
+    `<rect width="${size}" height="${size}" fill="#ffffff"/>`,
+    `<g transform="translate(${pad} ${pad}) scale(${scale})">`,
+    `<path fill="#000000" fill-rule="nonzero" d="${d}"/>`,
+    `</g></svg>`,
+    '',
+  ].join('');
+}
+
+function pngAt(svgText, size) {
+  return new Resvg(composeWhaleMarkSvg(svgText, size, Math.round(size * 28 / 256)), {
     fitTo: { mode: 'width', value: size },
-    background: 'rgba(0,0,0,0)',
+    background: '#ffffff',
   }).render().asPng();
+}
+
+function toneCounts(pixels) {
+  let light = 0;
+  let dark = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (pixels[i + 3] < 16) continue;
+    const luma = 0.2126 * pixels[i] + 0.7152 * pixels[i + 1] + 0.0722 * pixels[i + 2];
+    if (luma > 200) light += 1;
+    else if (luma < 40) dark += 1;
+  }
+  return { light, dark };
 }
 
 function writeIco(pngs) {
@@ -39,8 +75,24 @@ function writeIco(pngs) {
   return Buffer.concat(chunks);
 }
 
-const png256 = pngAt(256);
-fs.writeFileSync(path.join(root, 'icon.png'), png256);
-const ico = writeIco([pngAt(16), pngAt(32), pngAt(48), png256]);
-fs.writeFileSync(path.join(root, 'icon.ico'), ico);
-process.stdout.write(`wrote icon.png ${png256.length} icon.ico ${ico.length}\n`);
+function writeAppIcons(assetsDir = root) {
+  const svg = fs.readFileSync(path.join(assetsDir, 'whale.svg'), 'utf8');
+  const png256 = pngAt(svg, 256);
+  fs.writeFileSync(path.join(assetsDir, 'icon.png'), png256);
+  const ico = writeIco([pngAt(svg, 16), pngAt(svg, 32), pngAt(svg, 48), png256]);
+  fs.writeFileSync(path.join(assetsDir, 'icon.ico'), ico);
+  return { pngBytes: png256.length, icoBytes: ico.length };
+}
+
+if (require.main === module) {
+  const wrote = writeAppIcons();
+  process.stdout.write(`wrote icon.png ${wrote.pngBytes} icon.ico ${wrote.icoBytes}\n`);
+}
+
+module.exports = {
+  composeWhaleMarkSvg,
+  extractWhalePath,
+  pngAt,
+  toneCounts,
+  writeAppIcons,
+};
